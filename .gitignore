@@ -1,0 +1,11 @@
+/target/
+/build/
+/.gradle/
+/.idea/
+/history/
+/gradle/
+target/
+/src/test/resources/driver/
+/.gradle/buildOutputCleanup/
+sonar-project.properties
+/.scannerwork/

@@ -1,0 +1,108 @@
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath("net.serenity-bdd:serenity-gradle-plugin:2.2.0")
+
+    }
+}
+
+apply plugin: 'groovy'
+apply plugin: 'java'
+apply plugin: 'net.serenity-bdd.aggregator'
+apply plugin: 'java-library'
+apply plugin: 'jacoco'
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+
+dependencies {
+    compile 'net.serenity-bdd:serenity-cucumber:1.9.5'
+    compile group: 'net.serenity-bdd', name: 'serenity-core', version: '2.0.52'
+    compile group: 'net.serenity-bdd', name: 'serenity-junit', version: '2.0.52'
+    compile group: 'net.serenity-bdd', name: 'serenity-rest-assured', version: '2.0.81'
+    compile group: 'io.rest-assured', name: 'json-path', version: '3.0.0'
+    testCompile group: 'io.rest-assured', name: 'rest-assured', version: '3.3.0'
+    testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version:'1.6.1'
+    testCompile group: 'org.assertj', name: 'assertj-core', version:'3.8.0'
+    compile group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: '6.1.0.jre7'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.junit.vintage', name: 'junit-vintage-engine', version: '5.8.0-M1'
+    implementation group: 'javax.mail', name: 'javax.mail-api', version: '1.6.2'
+    implementation group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+    implementation group: 'com.sun.mail', name: 'smtp', version: '1.6.2'
+// https://mvnrepository.com/artifact/io.rest-assured/rest-assured
+    testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '3.0.0'
+}
+
+jacoco {
+    toolVersion = "0.8.5"
+    reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+
+test {
+    useJUnit {
+        include "**/*RunnerTags*"
+        gradle.startParameter.continueOnFailure = true
+        testLogging.showStandardStreams = true
+        systemProperties System.getProperties()
+    }
+
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
+    }
+}
+
+subprojects {
+    tasks.withType(Test) {
+        maxParallelForks = Runtime.runtime.availableProcessors()
+    }
+}
+
+task runParallelSuite(type: Test) {
+    def forks =4
+    exclude ('**/Library.java')
+    println "The Maximum parallel is $forks"
+    //println "Environment: is $env"
+    //systemProperty "environment","$env"
+    // uncomment maxParallelForks if you prefer to use the Gradle process forker
+    // which also requires a complete change of how the suite class works
+    systemProperty 'environment', System.properties['environments']
+    maxParallelForks = forks
+    include '**/**'
+    //include '**/SignUp/*RunnerTags*'
+    // testReportDir = file("${reporting.baseDir}/AParallelSuite")
+    // testResultsDir = file("${buildDir}/test-results/AParallelSuite")
+    // show standard out and standard error of the test JVM(s) on the console
+    testLogging.showStandardStreams = true
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.5
+            }
+        }
+    }
+}
